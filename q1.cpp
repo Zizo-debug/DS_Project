@@ -14,6 +14,7 @@ class Restaurants;
 bool isValidPassword(const string& password) {
     if (password.length() < 8 || password.length() > 12) {
         cout << "Password must be within 8 and 12 characters long.\n";
+
         return false;
     }
 
