@@ -856,9 +856,9 @@ struct Order {
         : dishList(list), totalCost(cost), type(t), customer(customer), employee(employee) {
         static int nextID = 10000; // Auto-generate 5-digit IDs
         ID = nextID++;
-        setExtraCost();
+       
     }
-
+    
     Order(const Order& other)
         : ID(other.ID), // Copy ID directly
         totalCost(other.totalCost), // Copy totalCost directly
@@ -916,7 +916,18 @@ struct Order {
         }
         else if (type == "Express") {
             totalCost += totalCost * 0.1; // Add 10% extra cost for express orders
+
         }
+    }
+
+    void displayDishList(Dishes* root) const
+    {
+        if (!root)
+            return;
+
+        displayDishList(root->left);
+        cout << "Dish: " << root->name << ", Price: $" << root->Price << endl;
+        displayDishList(root->right);
     }
 
     void displayOrder() const {
@@ -927,6 +938,21 @@ struct Order {
             << "Customer ID: " << (customer ? customer->getId() : -1) << "\n"
             << "Employee ID: " << (employee ? employee->getId() : -1) << "\n"
             << "Total Cost: " << totalCost << "\n";
+            displayDishList(this->dishList);
+            cout<<"Extra cost(Order type) = ";
+            if(type == "Premium")
+            {
+                cout<<500;
+            }
+            else if(type == "Express")
+            {
+                cout<<totalCost*0.1;
+            }
+            else
+            {
+                cout<<"NA";
+            }
+    
     }
 
     ~Order() {
@@ -1047,11 +1073,16 @@ private:
     Queue orders;
 
 public:
+    OrderQueue()
+    {
+
+    }
     void addOrder(Order* newOrder) {
         if (newOrder == nullptr) {
             cout << "Error: newOrder is null." << endl;
             return;
         }
+        newOrder->setExtraCost();
         cout << (*newOrder).ID << "\nyes3";
         orders.push(*newOrder); //enqueue
         cout << orders.front().ID;
@@ -1170,7 +1201,7 @@ public:
         name = n;
         type = t;
         menu = m;
-        orders = nullptr;
+        orders = new OrderQueue();
         Manager = Man;
         next = nullptr;
     }
@@ -1621,6 +1652,7 @@ public:
 };
 
 EmployeeHashMap EmployeeManagement;
+ OrderQueue orderQueue;
 
 void displayMainMenu(CustomerManagement& customerManagement, RestaurantClass& restaurantManager, Reviews& reviewSystem, promotionsStack& promoManager) {
     int n = 0;
@@ -1955,17 +1987,12 @@ void displayMainMenu(CustomerManagement& customerManagement, RestaurantClass& re
             //    break;
             //}
             //Customer* c1 = customerManagement.getCustomer(customerId);
-            //cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            //string restaurantName;
-            //cout << "Enter restaurant name to order from : ";
-            //getline(cin, restaurantName);
-//
-            //if (!restaurantManager.findName(restaurantName)) {
-            //    cout << "Restaurant does not exist!";
-            //    break;
-            //}
-            //Restaurants* r1 = restaurantManager.findName(restaurantName);
-//
+           
+           cin.ignore(numeric_limits<streamsize>::max(), '\n');
+           string restaurant;
+             cout << "Enter Restaurant name: ";
+            getline(cin, restaurant);
+            Restaurants* r = restaurantManager.searchRestaurantByName(restaurant);
             //int employeeId = 10000;// Later set to currently logged in employee
             //if (!EmployeeManagement.getEmployee(employeeId)) {
             //    break;
@@ -1996,7 +2023,7 @@ void displayMainMenu(CustomerManagement& customerManagement, RestaurantClass& re
                 cin >> dishPrice;
                 cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 order1->addDish(new Dishes(dishName, dishType, dishPrice));
-                order1->displayOrder();
+               // order1->displayOrder();
                 cout << "continue? (1=yes,0=no)";
                 int choice;
                 cin >> choice;
@@ -2010,29 +2037,42 @@ void displayMainMenu(CustomerManagement& customerManagement, RestaurantClass& re
 
             Dishes* dishes = nullptr;
 
-            OrderQueue orderQueue;
-            orderQueue.addOrder(order1);
+            r->orders->addOrder(order1);
+            r->orders->displayAllOrders();
+            
+            
+          //  orderQueue.addOrder(order1);
+           // orderQueue.displayAllOrders();
 
             break;
         }
         case 17: { // Cancel Order
-            int orderId;
-            cout << "Cancel Order\n";
-            cout << "Enter Order ID to Cancel: ";
-            cin >> orderId;
-            cin.ignore();
+           
+            /*cin.ignore();
             string restaurantName = "";
             cout << "Enter restaurant name to cancel order from : ";
             cin >> restaurantName;
-            Restaurants* r1 = restaurantManager.findName(restaurantName);
+            */
+             cin.ignore(numeric_limits<streamsize>::max(), '\n');
+           string restaurant;
+             cout << "Enter Restaurant name: ";
+            getline(cin, restaurant);
+            Restaurants* r = restaurantManager.searchRestaurantByName(restaurant);
+             int orderId;
+            cout << "Cancel Order\n";
+            
+            cout << "Enter Order ID to Cancel: ";
+            cin >> orderId;
+            Restaurants* r1 = restaurantManager.findName(restaurant);
             r1->orders->cancelOrder(orderId);
             break;
         }
         case 18: { // Process Order
             int orderId;
             cout << "Process Order\n";
+             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             string restaurantName = "";
-            cout << "Enter restaurant name to cancel order from : ";
+            cout << "Enter restaurant name: ";
             cin >> restaurantName;
             Restaurants* r1 = restaurantManager.findName(restaurantName);
             cout << "Enter Order ID to Process: ";
@@ -2040,8 +2080,18 @@ void displayMainMenu(CustomerManagement& customerManagement, RestaurantClass& re
             cin.ignore();
             Order currOrder = r1->orders->processOrder();
             //promoManager.applyDiscount(currOrder);
-            //cout << "The total payable amount is " << currOrder->totalCost;
-            cout << "Thank you for buying from " << r1->name;
+            cout << "The total payable amount is " << currOrder.totalCost;
+          //  cout << "Thank you for buying from " << r1->name;
+            break;
+        }
+        case 19:
+        {
+
+            string restaurantName;
+             cout << "Enter restaurant name: ";
+            cin >> restaurantName;
+            Restaurants* r1 = restaurantManager.findName(restaurantName);
+            r1->orders->displayAllOrders();
             break;
         }
         case 20: { // Add Promotion
